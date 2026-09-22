@@ -66,7 +66,8 @@ template <typename T>
 inline unsigned int count_digits(T n) {
     using count_type =
         typename std::conditional<(sizeof(T) > sizeof(uint32_t)), uint64_t, uint32_t>::type;
-#ifdef SPDLOG_USE_STD_FORMAT
+// SPDLOG_MODULE_BUILD: fmt's module does not export its detail namespace
+#if defined(SPDLOG_USE_STD_FORMAT) || defined(SPDLOG_MODULE_BUILD)
     return count_digits_fallback(static_cast<count_type>(n));
 #else
     return static_cast<unsigned int>(fmt::

@@ -9,6 +9,10 @@
 //
 #include <spdlog/tweakme.h>
 
+#ifdef SPDLOG_MODULE_BUILD
+// fmt comes from `import fmt;`; see spdlog/fmt/fmt.h
+#else
+
 #if !defined(SPDLOG_USE_STD_FORMAT)
 #if !defined(SPDLOG_FMT_EXTERNAL)
 #ifdef SPDLOG_HEADER_ONLY
@@ -21,3 +25,4 @@
 #include <fmt/chrono.h>
 #endif
 #endif
+#endif  // SPDLOG_MODULE_BUILD

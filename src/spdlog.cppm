@@ -85,29 +85,8 @@ module;
 
 #if defined(SPDLOG_USE_STD_FORMAT)
 #include <format>
-#elif defined(SPDLOG_FMT_EXTERNAL) || defined(SPDLOG_FMT_EXTERNAL_HO)
-#include <fmt/chrono.h>
-#include <fmt/format.h>
-#if defined(SPDLOG_WCHAR_FILENAMES) || defined(SPDLOG_WCHAR_TO_UTF8_SUPPORT)
-#include <fmt/xchar.h>
 #endif
-#else
-// spdlog/fmt/fmt.h (and spdlog/fmt/chrono.h, spdlog/fmt/xchar.h) define
-// FMT_HEADER_ONLY themselves unless SPDLOG_COMPILED_LIB is defined. The module
-// is always built in header-only mode (see the big comment above), so define it
-// here too, before pulling in the bundled fmt headers directly, to match.
-#ifndef FMT_HEADER_ONLY
-#define FMT_HEADER_ONLY
-#endif
-#ifndef FMT_USE_WINDOWS_H
-#define FMT_USE_WINDOWS_H 0
-#endif
-#include <spdlog/fmt/bundled/chrono.h>
-#include <spdlog/fmt/bundled/format.h>
-#if defined(SPDLOG_WCHAR_FILENAMES) || defined(SPDLOG_WCHAR_TO_UTF8_SUPPORT)
-#include <spdlog/fmt/bundled/xchar.h>
-#endif
-#endif
+// Nothing else: with fmt, this module imports it below instead of including it.
 
 // ---------------------------------------------------------------------------
 // Standard library headers used by spdlog's headers and their *-inl.h
@@ -204,6 +183,13 @@ module;
 
 export module spdlog;
 
+#if !defined(SPDLOG_USE_STD_FORMAT)
+// fmt as a module. `export import` re-exports its names, so consumers can specialize
+// fmt::formatter<T> without pulling in any fmt header. This requires an external fmt
+// built with FMT_MODULE=ON; the bundled copy ships no module source.
+export import fmt;
+#endif
+
 // SPDLOG_EXPORT expands to nothing for ordinary header use (#include
 // <spdlog/...>). Defining it as `export` here turns every declaration marked
 // SPDLOG_EXPORT in the headers below into an exported entity of this module.
@@ -297,49 +283,3 @@ export module spdlog;
 #pragma clang diagnostic pop
 #endif
 
-// ---------------------------------------------------------------------------
-// fmt names needed by consumers that specialize fmt::formatter<T>.
-//
-// fmt lives in the global module fragment above, so its entities stay attached
-// to the global module and are merely re-exported here - without this block
-// they would be reachable but not nameable through `import spdlog;`. fmt's own
-// namespace macros reopen the very namespace the headers use (fmt::v12::...).
-//
-// Nothing is re-exported under SPDLOG_USE_STD_FORMAT: names from namespace std
-// are never re-exported, consumers simply #include <format>.
-// ---------------------------------------------------------------------------
-#if !defined(SPDLOG_USE_STD_FORMAT)
-
-export FMT_BEGIN_NAMESPACE
-
-using ::fmt::basic_format_parse_context;
-using ::fmt::basic_memory_buffer;
-using ::fmt::basic_string_view;
-using ::fmt::format;
-using ::fmt::format_context;
-using ::fmt::format_error;
-using ::fmt::format_parse_context;
-using ::fmt::format_to;
-using ::fmt::formatter;
-using ::fmt::memory_buffer;
-using ::fmt::string_view;
-using ::fmt::to_string;
-using ::fmt::vformat;
-using ::fmt::vformat_to;
-
-#if FMT_VERSION >= 80000
-using ::fmt::appender;
-using ::fmt::format_string;
-using ::fmt::runtime;
-#endif
-
-#if defined(SPDLOG_WCHAR_FILENAMES) || defined(SPDLOG_WCHAR_TO_UTF8_SUPPORT)
-using ::fmt::wformat_context;
-using ::fmt::wformat_string;
-using ::fmt::wmemory_buffer;
-using ::fmt::wstring_view;
-#endif
-
-FMT_END_NAMESPACE
-
-#endif  // !SPDLOG_USE_STD_FORMAT

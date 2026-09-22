@@ -272,6 +272,13 @@ if(SPDLOG_BUILD_MODULE)
     endif()
     spdlog_message_once(MODULE "Build spdlog C++20 module: spdlog::spdlog_module")
 
+    # The module consumes fmt as a module (`import fmt;`). The bundled fmt ships no module
+    # source, so an external fmt built with FMT_MODULE=ON is required unless std::format is used.
+    if(NOT SPDLOG_USE_STD_FORMAT AND NOT SPDLOG_FMT_EXTERNAL AND NOT SPDLOG_FMT_EXTERNAL_HO)
+        message(FATAL_ERROR
+                "SPDLOG_BUILD_MODULE requires SPDLOG_USE_STD_FORMAT, or SPDLOG_FMT_EXTERNAL with an fmt built with FMT_MODULE=ON: the bundled fmt provides no module")
+    endif()
+
     # STATIC on purpose: a module interface unit still produces an object file that
     # importers have to link, and a DLL exporting nothing would be a trap under
     # BUILD_SHARED_LIBS=ON.
